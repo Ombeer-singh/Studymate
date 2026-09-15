@@ -1,6 +1,5 @@
 
-import { useState } from "react";
-import TopicCard from "../components/TopicCard";
+import { Link } from "react-router-dom";
 
 function Topics() {
   const [search, setSearch] = useState("");
