@@ -1,459 +1,320 @@
-
+import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
+
+import api from "../services/api";
 
 function TopicDetails() {
   const { topicId } = useParams();
 
-  const topics = [
-    {
-      id: 1,
-      name: "Normalization",
-      subject: "DBMS",
-      description:
-        "Database normalization is a process of organizing data to reduce redundancy and improve data integrity.",
-      frequency: "8 Times",
-      priority: "High Priority",
-      difficulty: "Medium",
-      questions: [
-        {
-          id: 1,
-          question:
-            "Explain Database Normalization. Discuss 1NF, 2NF and 3NF with suitable examples.",
-          year: "2025",
-          marks: "10 Marks",
-        },
-        {
-          id: 6,
-          question:
-            "Explain transaction states and ACID properties in DBMS.",
-          year: "2023",
-          marks: "8 Marks",
-        },
-      ],
-      notes: [
-        "Introduction to Normalization",
-        "First Normal Form (1NF)",
-        "Second Normal Form (2NF)",
-        "Third Normal Form (3NF)",
-      ],
-      strategy:
-        "Focus on 1NF, 2NF and 3NF definitions with examples. Practice normalization problems because this topic is frequently asked in exams.",
-    },
+  const [topic, setTopic] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-    {
-      id: 2,
-      name: "SQL",
-      subject: "DBMS",
-      description:
-        "SQL is used to create, manage and retrieve data from relational databases.",
-      frequency: "7 Times",
-      priority: "High Priority",
-      difficulty: "Easy",
-      questions: [
-        {
-          id: 2,
-          question:
-            "Explain different types of SQL commands with suitable examples.",
-          year: "2024",
-          marks: "8 Marks",
-        },
-      ],
-      notes: [
-        "DDL Commands",
-        "DML Commands",
-        "DCL Commands",
-        "TCL Commands",
-        "SQL Queries",
-      ],
-      strategy:
-        "Learn all major SQL command categories and practice common queries such as SELECT, INSERT, UPDATE and DELETE.",
-    },
+  useEffect(() => {
+    const fetchTopic = async () => {
+      try {
+        setLoading(true);
+        setError("");
 
-    {
-      id: 3,
-      name: "CPU Scheduling",
-      subject: "Operating System",
-      description:
-        "CPU scheduling determines which process gets CPU time and in what order.",
-      frequency: "6 Times",
-      priority: "High Priority",
-      difficulty: "Medium",
-      questions: [
-        {
-          id: 3,
-          question:
-            "Explain CPU Scheduling algorithms and compare FCFS, SJF and Round Robin.",
-          year: "2025",
-          marks: "10 Marks",
-        },
-      ],
-      notes: [
-        "FCFS Scheduling",
-        "SJF Scheduling",
-        "Round Robin",
-        "Priority Scheduling",
-        "Scheduling Criteria",
-      ],
-      strategy:
-        "Understand each scheduling algorithm with examples. Practice numerical problems involving waiting time, turnaround time and response time.",
-    },
+        const response = await api.get(
+          `/topics/${topicId}`
+        );
 
-    {
-      id: 4,
-      name: "OSI Model",
-      subject: "Computer Networks",
-      description:
-        "The OSI model divides network communication into seven different layers.",
-      frequency: "6 Times",
-      priority: "High Priority",
-      difficulty: "Easy",
-      questions: [
-        {
-          id: 4,
-          question:
-            "Explain the OSI reference model and describe all seven layers.",
-          year: "2024",
-          marks: "10 Marks",
-        },
-      ],
-      notes: [
-        "Physical Layer",
-        "Data Link Layer",
-        "Network Layer",
-        "Transport Layer",
-        "Session Layer",
-        "Presentation Layer",
-        "Application Layer",
-      ],
-      strategy:
-        "Remember all seven OSI layers in order and learn the main function of each layer along with important protocols and devices.",
-    },
+        if (response.data.success) {
+          setTopic(response.data.topic);
+        } else {
+          setError("Topic nahi mila.");
+        }
+      } catch (err) {
+        console.error("Topic Details Error:", err);
 
-    {
-      id: 5,
-      name: "Sorting Algorithms",
-      subject: "DAA",
-      description:
-        "Sorting algorithms arrange data in a particular order and are important for efficient data processing.",
-      frequency: "5 Times",
-      priority: "Medium Priority",
-      difficulty: "Medium",
-      questions: [
-        {
-          id: 5,
-          question:
-            "Explain different sorting algorithms and compare their time complexities.",
-          year: "2023",
-          marks: "8 Marks",
-        },
-      ],
-      notes: [
-        "Bubble Sort",
-        "Selection Sort",
-        "Insertion Sort",
-        "Merge Sort",
-        "Quick Sort",
-      ],
-      strategy:
-        "Learn the working and time complexity of common sorting algorithms. Compare best, average and worst-case complexities.",
-    },
+        setError(
+          err.response?.data?.message ||
+            "Topic details load nahi ho paaye."
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    {
-      id: 6,
-      name: "Transactions",
-      subject: "DBMS",
-      description:
-        "A database transaction is a logical unit of work that follows properties such as Atomicity, Consistency, Isolation and Durability.",
-      frequency: "5 Times",
-      priority: "Medium Priority",
-      difficulty: "Medium",
-      questions: [
-        {
-          id: 6,
-          question:
-            "Explain transaction states and ACID properties in DBMS.",
-          year: "2023",
-          marks: "8 Marks",
-        },
-      ],
-      notes: [
-        "Transaction States",
-        "Atomicity",
-        "Consistency",
-        "Isolation",
-        "Durability",
-      ],
-      strategy:
-        "Learn the ACID properties with simple real-world examples and understand different transaction states.",
-    },
-  ];
+    fetchTopic();
+  }, [topicId]);
 
-  const topic = topics.find(
-    (item) => item.id === Number(topicId)
-  );
+  // ==================== LOADING ====================
 
-  // Topic not found
-  if (!topic) {
+  if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 px-6 py-16">
-        <div className="mx-auto max-w-3xl rounded-2xl border border-slate-200 bg-white p-10 text-center shadow-sm">
-          <div className="text-5xl">🔍</div>
+      <div className="min-h-screen bg-slate-50 px-6 py-20">
+        <div className="mx-auto max-w-4xl text-center">
+          <div className="mx-auto mb-5 h-12 w-12 animate-spin rounded-full border-4 border-slate-200 border-t-indigo-600"></div>
+
+          <p className="text-slate-600">
+            Topic details load ho rahe hain...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // ==================== ERROR ====================
+
+  if (error || !topic) {
+    return (
+      <div className="min-h-screen bg-slate-50 px-6 py-20">
+        <div className="mx-auto max-w-2xl rounded-2xl border border-red-200 bg-white p-10 text-center">
+
+          <div className="text-5xl">
+            ⚠️
+          </div>
 
           <h1 className="mt-5 text-2xl font-bold text-slate-900">
             Topic Not Found
           </h1>
 
-          <p className="mt-2 text-slate-500">
-            The topic you are looking for does not exist.
+          <p className="mt-3 text-slate-500">
+            {error || "Topic details available nahi hain."}
           </p>
 
           <Link
             to="/topics"
-            className="mt-6 inline-block rounded-xl bg-indigo-600 px-5 py-3 text-sm font-semibold text-white hover:bg-indigo-700"
+            className="mt-6 inline-block rounded-xl bg-slate-900 px-6 py-3 text-sm font-semibold text-white"
           >
             ← Back to Topics
           </Link>
+
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 px-6 py-12">
-      <div className="mx-auto max-w-7xl">
+    <div className="min-h-screen bg-slate-50 px-6 py-14">
 
-        {/* Back Button */}
+      <div className="mx-auto max-w-5xl">
+
+        {/* ==================== BACK ==================== */}
+
         <Link
           to="/topics"
-          className="inline-flex items-center text-sm font-semibold text-indigo-600 hover:text-indigo-700"
+          className="text-sm font-medium text-indigo-600 hover:text-indigo-800"
         >
           ← Back to Topics
         </Link>
 
-        {/* Topic Header */}
-        <div className="mt-6 rounded-3xl bg-white p-6 shadow-sm md:p-10">
+        {/* ==================== HEADER ==================== */}
+
+        <div className="mt-6 rounded-3xl bg-white p-8 shadow-sm">
 
           <div className="flex flex-wrap items-center gap-3">
-            <span className="rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-600">
-              {topic.subject}
+
+            <span className="rounded-full bg-indigo-50 px-4 py-2 text-sm font-semibold text-indigo-600">
+              {topic.subject?.name || "Subject"}
             </span>
 
-            <span className="rounded-full bg-orange-50 px-3 py-1 text-xs font-semibold text-orange-600">
-              {topic.priority}
+            <span className="rounded-full bg-orange-50 px-4 py-2 text-sm font-semibold text-orange-600">
+              {topic.priority || "Medium"} Priority
             </span>
 
-            <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
-              {topic.difficulty}
-            </span>
           </div>
 
-          <h1 className="mt-5 text-3xl font-bold text-slate-900 md:text-4xl">
+          <h1 className="mt-6 text-3xl font-bold text-slate-900 md:text-4xl">
             {topic.name}
           </h1>
 
-          <p className="mt-4 max-w-3xl text-base leading-7 text-slate-600">
+          <p className="mt-4 max-w-3xl text-lg leading-8 text-slate-600">
             {topic.description}
           </p>
 
-          {/* Stats */}
-          <div className="mt-8 grid gap-4 sm:grid-cols-3">
+          <div className="mt-6 flex flex-wrap gap-4">
 
-            <div className="rounded-2xl bg-slate-50 p-5">
-              <p className="text-sm text-slate-500">
+            <div className="rounded-xl bg-slate-50 px-5 py-3">
+              <p className="text-xs text-slate-400">
                 Exam Frequency
               </p>
 
-              <p className="mt-2 text-xl font-bold text-indigo-600">
-                🔥 {topic.frequency}
+              <p className="mt-1 font-bold text-indigo-600">
+                {topic.frequency || 0} Times
               </p>
             </div>
 
-            <div className="rounded-2xl bg-slate-50 p-5">
-              <p className="text-sm text-slate-500">
-                Priority
+            <div className="rounded-xl bg-slate-50 px-5 py-3">
+              <p className="text-xs text-slate-400">
+                Semester
               </p>
 
-              <p className="mt-2 text-xl font-bold text-slate-900">
-                {topic.priority}
+              <p className="mt-1 font-bold text-slate-800">
+                {topic.subject?.semester || "-"}
               </p>
             </div>
 
-            <div className="rounded-2xl bg-slate-50 p-5">
-              <p className="text-sm text-slate-500">
-                Difficulty
+            <div className="rounded-xl bg-slate-50 px-5 py-3">
+              <p className="text-xs text-slate-400">
+                Subject Code
               </p>
 
-              <p className="mt-2 text-xl font-bold text-slate-900">
-                {topic.difficulty}
+              <p className="mt-1 font-bold text-slate-800">
+                {topic.subject?.code || "-"}
               </p>
             </div>
 
           </div>
+
         </div>
 
-        {/* Important PYQs */}
-        <section className="mt-10">
+        {/* ==================== STUDY NOTES ==================== */}
 
-          <div>
-            <span className="text-sm font-semibold uppercase tracking-wider text-indigo-600">
-              Previous Year Questions
+        <div className="mt-8 rounded-3xl bg-white p-8 shadow-sm">
+
+          <div className="flex items-center gap-3">
+            <span className="text-3xl">
+              📚
             </span>
 
-            <h2 className="mt-2 text-2xl font-bold text-slate-900">
-              Important PYQs
-            </h2>
+            <div>
+              <h2 className="text-2xl font-bold text-slate-900">
+                Detailed Notes
+              </h2>
 
-            <p className="mt-2 text-slate-500">
-              Questions related to this topic that are useful for exam preparation.
+              <p className="mt-1 text-sm text-slate-500">
+                Important concepts for exam preparation
+              </p>
+            </div>
+          </div>
+
+          {/* Introduction */}
+
+          <div className="mt-8">
+            <h3 className="text-xl font-bold text-slate-900">
+              1. Introduction
+            </h3>
+
+            <p className="mt-3 leading-7 text-slate-600">
+              {topic.description}
             </p>
           </div>
 
-          <div className="mt-6 space-y-5">
+          {/* Important Concepts */}
 
-            {topic.questions.map((question) => (
-              <div
-                key={question.id}
-                className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
-              >
+          <div className="mt-8">
+            <h3 className="text-xl font-bold text-slate-900">
+              2. Important Concepts
+            </h3>
 
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-600">
-                    {topic.subject}
-                  </span>
+            <div className="mt-4 grid gap-3 md:grid-cols-2">
 
-                  <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
-                    {question.year}
-                  </span>
-
-                  <span className="rounded-full bg-orange-50 px-3 py-1 text-xs font-semibold text-orange-600">
-                    {question.marks}
-                  </span>
-                </div>
-
-                <h3 className="mt-4 text-lg font-bold leading-7 text-slate-900">
-                  {question.question}
-                </h3>
-
-                <Link
-                  to={`/questions/${question.id}`}
-                  className="mt-5 inline-block rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
-                >
-                  View Question →
-                </Link>
-
-              </div>
-            ))}
-
-          </div>
-        </section>
-
-        {/* Related Notes */}
-        <section className="mt-12">
-
-          <div>
-            <span className="text-sm font-semibold uppercase tracking-wider text-indigo-600">
-              Study Material
-            </span>
-
-            <h2 className="mt-2 text-2xl font-bold text-slate-900">
-              Related Notes
-            </h2>
-
-            <p className="mt-2 text-slate-500">
-              Important concepts you should study for this topic.
-            </p>
-          </div>
-
-          <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-
-            {topic.notes.map((note, index) => (
-              <div
-                key={index}
-                className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-md"
-              >
-
-                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-indigo-50 text-xl">
-                  📝
-                </div>
-
-                <h3 className="mt-5 font-bold text-slate-900">
-                  {note}
-                </h3>
-
-                <p className="mt-2 text-sm text-slate-500">
-                  Important concept for {topic.name}.
+              <div className="rounded-xl bg-slate-50 p-4">
+                <span className="font-semibold text-slate-800">
+                  📌 Basic Concepts
+                </span>
+                <p className="mt-2 text-sm text-slate-600">
+                  Understand the fundamental concepts of{" "}
+                  {topic.name}.
                 </p>
-
-                <Link
-                  to="/notes"
-                  className="mt-4 inline-block text-sm font-semibold text-indigo-600 hover:text-indigo-700"
-                >
-                  Read Notes →
-                </Link>
-
-              </div>
-            ))}
-
-          </div>
-        </section>
-
-        {/* Exam Strategy */}
-        <section className="mt-12">
-
-          <div className="rounded-3xl border border-indigo-100 bg-indigo-50 p-6 md:p-8">
-
-            <div className="flex items-start gap-4">
-
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white text-2xl">
-                🎯
               </div>
 
-              <div>
-                <h2 className="text-xl font-bold text-slate-900">
-                  Exam Strategy
-                </h2>
+              <div className="rounded-xl bg-slate-50 p-4">
+                <span className="font-semibold text-slate-800">
+                  📌 Important Definitions
+                </span>
+                <p className="mt-2 text-sm text-slate-600">
+                  Learn the important definitions related to{" "}
+                  {topic.name}.
+                </p>
+              </div>
 
-                <p className="mt-3 leading-7 text-slate-600">
-                  {topic.strategy}
+              <div className="rounded-xl bg-slate-50 p-4">
+                <span className="font-semibold text-slate-800">
+                  📌 Important Formulas
+                </span>
+                <p className="mt-2 text-sm text-slate-600">
+                  Keep important formulas and methods ready
+                  for examination.
+                </p>
+              </div>
+
+              <div className="rounded-xl bg-slate-50 p-4">
+                <span className="font-semibold text-slate-800">
+                  📌 Exam Questions
+                </span>
+                <p className="mt-2 text-sm text-slate-600">
+                  Practice previous-year and repeated
+                  questions from this topic.
                 </p>
               </div>
 
             </div>
+          </div>
+
+          {/* Exam Preparation */}
+
+          <div className="mt-8 rounded-2xl border border-indigo-100 bg-indigo-50 p-6">
+
+            <h3 className="text-lg font-bold text-indigo-900">
+              🎯 Exam Preparation
+            </h3>
+
+            <ul className="mt-4 space-y-3 text-sm text-indigo-900">
+
+              <li>
+                ✓ Topic ke basic concepts clear karo.
+              </li>
+
+              <li>
+                ✓ Important definitions aur formulas revise karo.
+              </li>
+
+              <li>
+                ✓ Previous-year questions practice karo.
+              </li>
+
+              <li>
+                ✓ Frequently repeated questions ko priority do.
+              </li>
+
+            </ul>
 
           </div>
 
-        </section>
+        </div>
 
-        {/* Bottom CTA */}
-        <section className="mt-12 rounded-3xl bg-slate-900 p-8 text-center md:p-10">
+        {/* ==================== HANDWRITTEN NOTES ==================== */}
 
-          <h2 className="text-2xl font-bold text-white">
-            Ready to practice?
-          </h2>
+        <div className="mt-8 rounded-3xl bg-white p-8 shadow-sm">
 
-          <p className="mx-auto mt-3 max-w-2xl text-slate-300">
-            Practice more previous year questions and improve your exam preparation.
-          </p>
+          <div className="flex items-center gap-3">
+            <span className="text-3xl">
+              📝
+            </span>
 
-          <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
+            <div>
+              <h2 className="text-2xl font-bold text-slate-900">
+                Handwritten Notes
+              </h2>
 
-            <Link
-              to="/questions"
-              className="rounded-xl bg-indigo-600 px-6 py-3 text-sm font-semibold text-white hover:bg-indigo-700"
-            >
-              Practice PYQs
-            </Link>
+              <p className="mt-1 text-sm text-slate-500">
+                Quick revision notes
+              </p>
+            </div>
+          </div>
 
-            <Link
-              to="/topics"
-              className="rounded-xl border border-slate-700 px-6 py-3 text-sm font-semibold text-white hover:bg-slate-800"
-            >
-              Explore More Topics
-            </Link>
+          <div className="mt-6 rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-8 text-center">
+
+            <div className="text-5xl">
+              ✍️
+            </div>
+
+            <h3 className="mt-4 text-lg font-bold text-slate-900">
+              Handwritten Notes Coming Soon
+            </h3>
+
+            <p className="mx-auto mt-2 max-w-lg text-sm leading-6 text-slate-500">
+              Is topic ke short handwritten revision notes
+              yahan available honge.
+            </p>
 
           </div>
 
-        </section>
+        </div>
 
       </div>
     </div>
@@ -461,4 +322,3 @@ function TopicDetails() {
 }
 
 export default TopicDetails;
-

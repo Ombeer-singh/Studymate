@@ -1,169 +1,234 @@
+import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import api from "../services/api";
 
 function SubjectDetails() {
   const { subjectId } = useParams();
 
-  return (
-    <div className="min-h-screen bg-slate-50 px-6 py-16">
-      <div className="mx-auto max-w-7xl">
+  const [subject, setSubject] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-        {/* Breadcrumb */}
-        <div className="mb-6 text-sm text-slate-500">
-          <Link to="/" className="hover:text-indigo-600">
-            Home
-          </Link>
+  useEffect(() => {
+    const fetchSubject = async () => {
+      try {
+        setLoading(true);
+        setError("");
 
-          <span className="mx-2">/</span>
+        const response = await api.get(`/subjects/${subjectId}`);
 
-          <Link to="/subjects" className="hover:text-indigo-600">
-            Subjects
-          </Link>
+        if (response.data.success) {
+          setSubject(response.data.subject);
+        } else {
+          setError("Subject nahi mila.");
+        }
+      } catch (err) {
+        console.error("Subject Details Error:", err);
 
-          <span className="mx-2">/</span>
+        setError(
+          err.response?.data?.message ||
+            "Subject details load nahi ho paayi."
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
 
-          <span>Subject Details</span>
+    fetchSubject();
+  }, [subjectId]);
+
+  // Loading
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-4 border-gray-200 border-t-blue-600"></div>
+
+          <p className="text-gray-600">
+            Subject details load ho rahi hain...
+          </p>
         </div>
+      </div>
+    );
+  }
+
+  // Error
+  if (error) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
+        <div className="rounded-2xl border border-red-200 bg-red-50 p-8 text-center">
+          <div className="text-4xl">⚠️</div>
+
+          <h2 className="mt-4 text-xl font-bold text-red-700">
+            Subject Not Found
+          </h2>
+
+          <p className="mt-2 text-red-600">
+            {error}
+          </p>
+
+          <Link
+            to="/subjects"
+            className="mt-5 inline-block rounded-lg bg-blue-600 px-5 py-2.5 font-medium text-white hover:bg-blue-700"
+          >
+            ← Back to Subjects
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (!subject) {
+    return null;
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50 px-4 py-10">
+      <div className="mx-auto max-w-6xl">
+
+        {/* Back Button */}
+        <Link
+          to="/subjects"
+          className="mb-6 inline-flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-800"
+        >
+          ← Back to Subjects
+        </Link>
 
         {/* Subject Header */}
-        <div className="rounded-3xl bg-indigo-600 p-8 text-white shadow-lg md:p-10">
-          <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+        <div className="rounded-2xl bg-white p-8 shadow-sm">
+          <div className="flex flex-col gap-6 md:flex-row md:items-center">
 
-            <div>
-              <span className="text-sm font-medium text-indigo-200">
-                B.Tech Subject
-              </span>
+            {/* Icon */}
+            <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-4xl">
+              {subject.icon || "📚"}
+            </div>
 
-              <h1 className="mt-2 text-3xl font-bold md:text-4xl">
-                Database Management System
+            {/* Information */}
+            <div className="flex-1">
+              <div className="mb-3 flex flex-wrap gap-2">
+                <span className="rounded-full bg-blue-100 px-3 py-1 text-sm font-semibold text-blue-700">
+                  Semester {subject.semester}
+                </span>
+
+                <span className="rounded-full bg-gray-100 px-3 py-1 text-sm font-semibold text-gray-700">
+                  {subject.code || "No Code"}
+                </span>
+              </div>
+
+              <h1 className="text-3xl font-bold text-gray-900 md:text-4xl">
+                {subject.name}
               </h1>
 
-              <p className="mt-3 max-w-2xl leading-7 text-indigo-100">
-                Explore important topics, previous year questions and
-                exam-focused notes for DBMS.
+              <p className="mt-3 text-gray-600">
+                {subject.description ||
+                  "Subject details coming soon."}
               </p>
             </div>
-
-            <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl bg-white text-4xl">
-              🗄️
-            </div>
-
           </div>
         </div>
 
-        {/* Stats */}
-        <div className="mt-8 grid gap-5 sm:grid-cols-3">
+        {/* Subject Information */}
+        <div className="mt-8 grid gap-6 md:grid-cols-3">
 
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-            <p className="text-sm text-slate-500">
-              Total Questions
+          <div className="rounded-2xl bg-white p-6 shadow-sm">
+            <p className="text-sm text-gray-500">
+              University
             </p>
-            <h2 className="mt-2 text-2xl font-bold text-slate-900">
-              50+
-            </h2>
+
+            <p className="mt-2 text-lg font-bold text-gray-900">
+              {subject.university}
+            </p>
           </div>
 
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-            <p className="text-sm text-slate-500">
-              Important Topics
+          <div className="rounded-2xl bg-white p-6 shadow-sm">
+            <p className="text-sm text-gray-500">
+              Branch
             </p>
-            <h2 className="mt-2 text-2xl font-bold text-slate-900">
-              15+
-            </h2>
+
+            <p className="mt-2 text-lg font-bold text-gray-900">
+              {subject.branch}
+            </p>
           </div>
 
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-            <p className="text-sm text-slate-500">
-              Study Notes
+          <div className="rounded-2xl bg-white p-6 shadow-sm">
+            <p className="text-sm text-gray-500">
+              Subject Code
             </p>
-            <h2 className="mt-2 text-2xl font-bold text-slate-900">
-              20+
-            </h2>
+
+            <p className="mt-2 text-lg font-bold text-gray-900">
+              {subject.code}
+            </p>
           </div>
 
         </div>
 
-        {/* Topics */}
-        <div className="mt-12">
-          <div className="flex items-end justify-between">
-            <div>
-              <span className="text-sm font-semibold uppercase tracking-wider text-indigo-600">
-                Syllabus
-              </span>
+        {/* Study Options */}
+        <div className="mt-8">
+          <h2 className="mb-5 text-2xl font-bold text-gray-900">
+            Study Material
+          </h2>
 
-              <h2 className="mt-2 text-2xl font-bold text-slate-900">
-                Important Topics
-              </h2>
-            </div>
+          <div className="grid gap-6 md:grid-cols-3">
 
             <Link
-              to="/topics"
-              className="hidden font-semibold text-indigo-600 hover:text-indigo-700 sm:block"
+              to={`/questions?subject=${subject._id}`}
+              className="rounded-2xl bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
             >
-              View All →
+              <div className="text-3xl">📝</div>
+
+              <h3 className="mt-4 text-xl font-bold text-gray-900">
+                Previous Year Questions
+              </h3>
+
+              <p className="mt-2 text-sm text-gray-600">
+                Is subject ke PYQs dekho.
+              </p>
+
+              <span className="mt-4 inline-block font-semibold text-blue-600">
+                View PYQs →
+              </span>
             </Link>
-          </div>
 
-          <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            <Link
+              to={`/topics?subject=${subject._id}`}
+              className="rounded-2xl bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
+            >
+              <div className="text-3xl">📚</div>
 
-            {[
-              "Database Fundamentals",
-              "ER Model",
-              "Relational Model",
-              "Normalization",
-              "SQL",
-              "Transactions",
-            ].map((topic, index) => (
-              <Link
-                key={topic}
-                to={`/topics/${index + 1}`}
-                className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-indigo-50 text-xl">
-                    📚
-                  </div>
+              <h3 className="mt-4 text-xl font-bold text-gray-900">
+                Topics
+              </h3>
 
-                  <span className="text-sm text-slate-400">
-                    →
-                  </span>
-                </div>
+              <p className="mt-2 text-sm text-gray-600">
+                Is subject ke important topics dekho.
+              </p>
 
-                <h3 className="mt-5 font-bold text-slate-900">
-                  {topic}
-                </h3>
+              <span className="mt-4 inline-block font-semibold text-blue-600">
+                View Topics →
+              </span>
+            </Link>
 
-                <p className="mt-2 text-sm text-slate-500">
-                  Important concepts and exam questions
-                </p>
-              </Link>
-            ))}
+            <Link
+              to={`/notes?subject=${subject._id}`}
+              className="rounded-2xl bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
+            >
+              <div className="text-3xl">📖</div>
+
+              <h3 className="mt-4 text-xl font-bold text-gray-900">
+                Notes
+              </h3>
+
+              <p className="mt-2 text-sm text-gray-600">
+                Is subject ke study notes dekho.
+              </p>
+
+              <span className="mt-4 inline-block font-semibold text-blue-600">
+                View Notes →
+              </span>
+            </Link>
 
           </div>
         </div>
-
-        {/* Actions */}
-        <div className="mt-12 flex flex-wrap gap-4">
-
-          <Link
-            to="/questions"
-            className="rounded-xl bg-indigo-600 px-6 py-3 font-semibold text-white hover:bg-indigo-700"
-          >
-            Practice PYQs →
-          </Link>
-
-          <Link
-            to="/notes"
-            className="rounded-xl border border-slate-300 bg-white px-6 py-3 font-semibold text-slate-700 hover:bg-slate-100"
-          >
-            Read Notes
-          </Link>
-
-        </div>
-
-        {/* ID */}
-        <p className="mt-8 text-xs text-slate-400">
-          Subject ID: {subjectId}
-        </p>
 
       </div>
     </div>

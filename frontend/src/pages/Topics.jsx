@@ -1,90 +1,98 @@
+import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 
-import { Link } from "react-router-dom";
+import api from "../services/api";
+import TopicCard from "../components/TopicCard";
 
 function Topics() {
+  const [searchParams] = useSearchParams();
+
+  // URL se subject ID
+  const subjectId = searchParams.get("subject");
+
   const [search, setSearch] = useState("");
   const [subjectFilter, setSubjectFilter] =
     useState("All Subjects");
   const [priorityFilter, setPriorityFilter] =
     useState("All Priorities");
 
-  const topics = [
-    {
-      id: 1,
-      name: "Normalization",
-      subject: "DBMS",
-      description:
-        "Learn 1NF, 2NF, 3NF and how normalization reduces data redundancy.",
-      frequency: "8 Times",
-      priority: "High Priority",
-    },
-    {
-      id: 2,
-      name: "SQL",
-      subject: "DBMS",
-      description:
-        "Learn SQL commands, queries, joins, functions and database operations.",
-      frequency: "7 Times",
-      priority: "High Priority",
-    },
-    {
-      id: 3,
-      name: "CPU Scheduling",
-      subject: "Operating System",
-      description:
-        "Understand FCFS, SJF, Priority Scheduling and Round Robin algorithms.",
-      frequency: "6 Times",
-      priority: "High Priority",
-    },
-    {
-      id: 4,
-      name: "OSI Model",
-      subject: "Computer Networks",
-      description:
-        "Study all seven layers of the OSI reference model and their functions.",
-      frequency: "6 Times",
-      priority: "High Priority",
-    },
-    {
-      id: 5,
-      name: "Sorting Algorithms",
-      subject: "DAA",
-      description:
-        "Learn Bubble Sort, Selection Sort, Insertion Sort, Merge Sort and Quick Sort.",
-      frequency: "5 Times",
-      priority: "Medium Priority",
-    },
-    {
-      id: 6,
-      name: "Transactions",
-      subject: "DBMS",
-      description:
-        "Understand transactions, transaction states and ACID properties.",
-      frequency: "5 Times",
-      priority: "Medium Priority",
-    },
+  const [topics, setTopics] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  // ==================== FETCH TOPICS ====================
+
+  useEffect(() => {
+    const fetchTopics = async () => {
+      try {
+        setLoading(true);
+        setError("");
+
+        const url = subjectId
+          ? `/topics?subject=${subjectId}`
+          : "/topics";
+
+        const response = await api.get(url);
+
+        if (response.data.success) {
+          setTopics(response.data.topics || []);
+        } else {
+          setError("Topics load nahi ho paaye.");
+        }
+      } catch (err) {
+        console.error("Topics Error:", err);
+
+        setError(
+          err.response?.data?.message ||
+            "Topics load nahi ho paaye."
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTopics();
+  }, [subjectId]);
+
+  // ==================== SUBJECT LIST ====================
+
+  const subjectNames = [
+    ...new Set(
+      topics
+        .map((topic) => topic.subject?.name)
+        .filter(Boolean)
+    ),
   ];
 
-  // Filter Topics
+  // ==================== FILTER TOPICS ====================
+
   const filteredTopics = topics.filter((topic) => {
+    const topicName = topic.name || "";
+
+    const topicSubject =
+      topic.subject?.name || "";
+
+    const topicDescription =
+      topic.description || "";
+
+    const topicPriority =
+      topic.priority || "Medium";
+
+    const searchText = search.toLowerCase();
+
     const matchesSearch =
-      topic.name
-        .toLowerCase()
-        .includes(search.toLowerCase()) ||
-      topic.subject
-        .toLowerCase()
-        .includes(search.toLowerCase()) ||
-      topic.description
-        .toLowerCase()
-        .includes(search.toLowerCase());
+      topicName.toLowerCase().includes(searchText) ||
+      topicSubject.toLowerCase().includes(searchText) ||
+      topicDescription.toLowerCase().includes(searchText);
 
     const matchesSubject =
       subjectFilter === "All Subjects" ||
-      topic.subject === subjectFilter;
+      topicSubject === subjectFilter;
 
     const matchesPriority =
       priorityFilter === "All Priorities" ||
-      topic.priority === priorityFilter;
+      topicPriority ===
+        priorityFilter.replace(" Priority", "");
 
     return (
       matchesSearch &&
@@ -97,7 +105,8 @@ function Topics() {
     <div className="min-h-screen bg-slate-50 px-6 py-16">
       <div className="mx-auto max-w-7xl">
 
-        {/* Header */}
+        {/* ==================== HEADER ==================== */}
+
         <div className="text-center">
           <span className="text-sm font-semibold uppercase tracking-wider text-indigo-600">
             Important Topics
@@ -113,21 +122,26 @@ function Topics() {
           </p>
         </div>
 
-        {/* Search & Filters */}
+        {/* ==================== SEARCH & FILTERS ==================== */}
+
         <div className="mt-10 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
 
           <div className="grid gap-4 md:grid-cols-3">
 
             {/* Search */}
+
             <input
               type="text"
               placeholder="Search topics..."
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) =>
+                setSearch(e.target.value)
+              }
               className="rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-700 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
             />
 
             {/* Subject Filter */}
+
             <select
               value={subjectFilter}
               onChange={(e) =>
@@ -139,24 +153,18 @@ function Topics() {
                 All Subjects
               </option>
 
-              <option value="DBMS">
-                DBMS
-              </option>
-
-              <option value="Operating System">
-                Operating System
-              </option>
-
-              <option value="Computer Networks">
-                Computer Networks
-              </option>
-
-              <option value="DAA">
-                DAA
-              </option>
+              {subjectNames.map((subjectName) => (
+                <option
+                  key={subjectName}
+                  value={subjectName}
+                >
+                  {subjectName}
+                </option>
+              ))}
             </select>
 
             {/* Priority Filter */}
+
             <select
               value={priorityFilter}
               onChange={(e) =>
@@ -175,66 +183,129 @@ function Topics() {
               <option value="Medium Priority">
                 Medium Priority
               </option>
+
+              <option value="Low Priority">
+                Low Priority
+              </option>
             </select>
 
           </div>
         </div>
 
-        {/* Result Heading */}
-        <div className="mt-10 flex items-center justify-between">
+        {/* ==================== LOADING ==================== */}
 
-          <div>
-            <h2 className="text-xl font-bold text-slate-900">
-              Important Topics
-            </h2>
+        {loading && (
+          <div className="mt-16 text-center">
+            <div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-4 border-slate-200 border-t-indigo-600"></div>
 
-            <p className="mt-1 text-sm text-slate-500">
-              Study the topics that appear frequently in exams.
+            <p className="text-slate-600">
+              Topics load ho rahe hain...
             </p>
           </div>
+        )}
 
-          <span className="text-sm text-slate-500">
-            {filteredTopics.length} Topics
-          </span>
+        {/* ==================== ERROR ==================== */}
 
-        </div>
+        {!loading && error && (
+          <div className="mt-10 rounded-2xl border border-red-200 bg-red-50 p-10 text-center">
 
-        {/* Topic Cards */}
-        {filteredTopics.length > 0 && (
-          <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="text-4xl">
+              ⚠️
+            </div>
 
-            {filteredTopics.map((topic) => (
-              <TopicCard
-                key={topic.id}
-                id={topic.id}
-                name={topic.name}
-                subject={topic.subject}
-                description={topic.description}
-                frequency={topic.frequency}
-                priority={topic.priority}
-              />
-            ))}
+            <h3 className="mt-4 text-lg font-bold text-red-700">
+              Something went wrong
+            </h3>
+
+            <p className="mt-2 text-sm text-red-600">
+              {error}
+            </p>
+
+            <button
+              onClick={() =>
+                window.location.reload()
+              }
+              className="mt-5 rounded-lg bg-red-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-red-700"
+            >
+              Try Again
+            </button>
 
           </div>
         )}
 
-        {/* No Results */}
-        {filteredTopics.length === 0 && (
-          <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-10 text-center">
+        {/* ==================== CONTENT ==================== */}
 
-            <div className="text-4xl">
-              🔍
+        {!loading && !error && (
+          <>
+            {/* Result Heading */}
+
+            <div className="mt-10 flex items-center justify-between">
+
+              <div>
+                <h2 className="text-xl font-bold text-slate-900">
+                  Important Topics
+                </h2>
+
+                <p className="mt-1 text-sm text-slate-500">
+                  Study the topics that appear frequently
+                  in exams.
+                </p>
+              </div>
+
+              <span className="text-sm text-slate-500">
+                {filteredTopics.length} Topics
+              </span>
+
             </div>
 
-            <h3 className="mt-4 text-lg font-bold text-slate-900">
-              No Topics Found
-            </h3>
+            {/* Topic Cards */}
 
-            <p className="mt-2 text-sm text-slate-500">
-              Try changing your search, subject or priority filter.
-            </p>
+            {filteredTopics.length > 0 && (
+              <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
 
-          </div>
+                {filteredTopics.map((topic) => (
+                  <TopicCard
+                    key={topic._id}
+                    id={topic._id}
+                    name={topic.name}
+                    subject={
+                      topic.subject?.name ||
+                      "Unknown Subject"
+                    }
+                    description={
+                      topic.description ||
+                      "Topic details coming soon."
+                    }
+                    frequency={`${topic.frequency || 0} Times`}
+                    priority={`${topic.priority || "Medium"} Priority`}
+                  />
+                ))}
+
+              </div>
+            )}
+
+            {/* No Results */}
+
+            {filteredTopics.length === 0 && (
+              <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-10 text-center">
+
+                <div className="text-4xl">
+                  🔍
+                </div>
+
+                <h3 className="mt-4 text-lg font-bold text-slate-900">
+                  No Topics Found
+                </h3>
+
+                <p className="mt-2 text-sm text-slate-500">
+                  Try changing your search, subject or
+                  priority filter.
+                </p>
+
+              </div>
+            )}
+
+          </>
         )}
 
       </div>
